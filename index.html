@@ -2,188 +2,135 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dobrikov-coach</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dobrikov Coach</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Скрываем стандартные стрелочки у инпутов с числами */
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        input[type="number"] {
-            -moz-appearance: textfield;
-        }
-        body {
-            /* Отключаем выделение текста, чтобы ощущалось как нативное приложение */
-            user-select: none; 
-            -webkit-user-select: none;
-        }
+        body { background-color: #1e222d; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .container { background-color: #2b313f; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
+        h1 { color: #facc15; font-size: 24px; font-style: italic; margin-bottom: 5px; }
+        .subtitle { color: #9ca3af; font-size: 12px; margin-top: 0; margin-bottom: 20px; }
+        label { display: block; text-align: left; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #9ca3af; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: none; background: #1e222d; color: white; box-sizing: border-box; font-size: 16px; }
+        .row { display: flex; gap: 10px; }
+        .row div { width: 50%; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        .btn-calc { background: #facc15; color: #1e222d; }
+        .btn-back { background: #3b82f6; color: white; }
+        .btn-send { background: #facc15; color: #1e222d; margin-bottom: 10px; }
+        #result-screen { display: none; }
+        .macros { display: flex; justify-content: space-between; margin: 20px 0; }
+        .macro-box { background: #1e222d; padding: 10px; border-radius: 10px; width: 30%; font-size: 12px; }
+        .macro-value { display: block; font-size: 18px; font-weight: bold; margin-top: 5px; }
+        .calories-box { border: 1px solid #facc15; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .calories-value { font-size: 32px; font-weight: bold; color: #facc15; }
     </style>
 </head>
-<body class="bg-neutral-900 text-neutral-100 font-sans antialiased min-h-screen">
-    
-    <!-- Главный контейнер приложения -->
-    <div id="app" class="max-w-md mx-auto p-5 flex flex-col h-screen">
+<body>
+    <div id="main-screen" class="container">
+        <h1>DOBRIKOV-COACH</h1>
+        <p class="subtitle">Твой ИИ-тренер на связи</p>
         
-        <!-- Заголовок -->
-        <header class="text-center mb-8 mt-4">
-            <h1 class="text-3xl font-black italic uppercase tracking-wider text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.4)]">
-                Dobrikov-coach
-            </h1>
-            <p class="text-neutral-400 text-sm mt-1 font-medium">Твой ИИ-тренер на связи</p>
-        </header>
-
-        <!-- Форма для ввода данных -->
-        <form id="onboarding-form" class="flex flex-col gap-5 flex-1">
-            
-            <div class="flex flex-col">
-                <label for="age" class="text-sm font-bold text-neutral-300 mb-1 uppercase tracking-wide">Возраст</label>
-                <input type="number" id="age" required min="14" max="100" placeholder="Например, 25"
-                    class="bg-neutral-800 border-2 border-neutral-700 rounded-xl p-4 text-white text-lg focus:outline-none focus:border-yellow-400 transition-colors shadow-inner placeholder-neutral-600">
+        <label>ВОЗРАСТ</label>
+        <input type="number" id="age" placeholder="Например, 25">
+        
+        <div class="row">
+            <div>
+                <label>ВЕС (КГ)</label>
+                <input type="number" id="weight" placeholder="80">
             </div>
-
-            <div class="flex gap-4">
-                <div class="flex flex-col flex-1">
-                    <label for="weight" class="text-sm font-bold text-neutral-300 mb-1 uppercase tracking-wide">Вес (кг)</label>
-                    <input type="number" id="weight" required min="40" max="200" placeholder="80"
-                        class="bg-neutral-800 border-2 border-neutral-700 rounded-xl p-4 text-white text-lg focus:outline-none focus:border-yellow-400 transition-colors shadow-inner placeholder-neutral-600">
-                </div>
-                <div class="flex flex-col flex-1">
-                    <label for="height" class="text-sm font-bold text-neutral-300 mb-1 uppercase tracking-wide">Рост (см)</label>
-                    <input type="number" id="height" required min="140" max="250" placeholder="180"
-                        class="bg-neutral-800 border-2 border-neutral-700 rounded-xl p-4 text-white text-lg focus:outline-none focus:border-yellow-400 transition-colors shadow-inner placeholder-neutral-600">
-                </div>
-            </div>
-
-            <div class="flex flex-col mb-4">
-                <label for="goal" class="text-sm font-bold text-neutral-300 mb-1 uppercase tracking-wide">Твоя цель</label>
-                <select id="goal" required
-                    class="bg-neutral-800 border-2 border-neutral-700 rounded-xl p-4 text-white text-lg focus:outline-none focus:border-yellow-400 transition-colors appearance-none shadow-inner">
-                    <option value="lose">🔥 Похудение (Сушка)</option>
-                    <option value="recomp" selected>⚡️ Рельеф (Поддержание)</option>
-                    <option value="gain">💪 Набор массы</option>
-                </select>
-            </div>
-
-            <div class="mt-auto pb-6">
-                <button type="submit" 
-                    class="w-full bg-yellow-400 text-neutral-900 font-black text-xl uppercase py-4 rounded-xl active:bg-yellow-500 transition-transform transform active:scale-95 shadow-[0_0_15px_rgba(250,204,21,0.3)]">
-                    Рассчитать БЖУ
-                </button>
-            </div>
-        </form>
-
-        <!-- Блок результатов -->
-        <div id="results-card" class="hidden flex-col flex-1">
-            <h2 class="text-2xl font-black text-white uppercase text-center mb-6">Твой план готов, бро</h2>
-            
-            <div class="bg-neutral-800 border-2 border-yellow-400/30 rounded-2xl p-6 relative overflow-hidden shadow-lg shadow-yellow-400/10">
-                <!-- Декор -->
-                <div class="absolute -top-10 -right-10 w-32 h-32 bg-yellow-400/10 rounded-full blur-2xl"></div>
-                
-                <div class="text-center mb-6 relative z-10">
-                    <p class="text-neutral-400 text-sm font-bold uppercase tracking-widest mb-1">Каллораж</p>
-                    <p class="text-5xl font-black text-yellow-400"><span id="res-kcal">0</span> <span class="text-xl text-neutral-300">ккал</span></p>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3 relative z-10">
-                    <div class="bg-neutral-900/80 rounded-xl p-3 text-center border border-neutral-700">
-                        <p class="text-xs text-neutral-400 uppercase font-bold mb-1">Белки</p>
-                        <p class="text-xl font-bold text-white"><span id="res-protein">0</span>г</p>
-                    </div>
-                    <div class="bg-neutral-900/80 rounded-xl p-3 text-center border border-neutral-700">
-                        <p class="text-xs text-neutral-400 uppercase font-bold mb-1">Жиры</p>
-                        <p class="text-xl font-bold text-white"><span id="res-fat">0</span>г</p>
-                    </div>
-                    <div class="bg-neutral-900/80 rounded-xl p-3 text-center border border-neutral-700">
-                        <p class="text-xs text-neutral-400 uppercase font-bold mb-1">Углеводы</p>
-                        <p class="text-xl font-bold text-white"><span id="res-carbs">0</span>г</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-auto pb-6 pt-8">
-                <button type="button" id="btn-back"
-                    class="w-full bg-neutral-800 border-2 border-neutral-700 text-white font-bold text-lg uppercase py-4 rounded-xl active:bg-neutral-700 transition-colors">
-                    Назад к форме
-                </button>
+            <div>
+                <label>РОСТ (СМ)</label>
+                <input type="number" id="height" placeholder="180">
             </div>
         </div>
+        
+        <label>ТВОЯ ЦЕЛЬ</label>
+        <select id="goal">
+            <option value="Рельеф (Поддержание)">⚡ Рельеф (Поддержание)</option>
+            <option value="Набор массы">💪 Набор массы</option>
+            <option value="Похудение">🔥 Похудение</option>
+        </select>
+        
+        <button class="btn btn-calc" onclick="calculate()">РАССЧИТАТЬ БЖУ</button>
+    </div>
+
+    <div id="result-screen" class="container">
+        <h1>DOBRIKOV-COACH</h1>
+        <p class="subtitle">Твой ИИ-тренер на связи</p>
+        <h2>ТВОЙ ПЛАН ГОТОВ, БРО</h2>
+        
+        <div class="calories-box">
+            <div style="font-size: 12px; font-weight: bold;">КАЛЛОРАЖ</div>
+            <div class="calories-value"><span id="res-cal">0</span> <span style="font-size: 16px; color: white;">ккал</span></div>
+            <div class="macros">
+                <div class="macro-box">БЕЛКИ<span class="macro-value"><span id="res-prot">0</span>г</span></div>
+                <div class="macro-box">ЖИРЫ<span class="macro-value"><span id="res-fat">0</span>г</span></div>
+                <div class="macro-box">УГЛЕВОДЫ<span class="macro-value"><span id="res-carb">0</span>г</span></div>
+            </div>
+        </div>
+        
+        <button class="btn btn-send" onclick="sendData()">🚀 ОТПРАВИТЬ ТРЕНЕРУ</button>
+        <button class="btn btn-back" onclick="goBack()">НАЗАД К ФОРМЕ</button>
     </div>
 
     <script>
-        // Инициализация Telegram Web App
-        const tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем приложение на весь экран
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        let finalData = {};
 
-        // Элементы DOM
-        const form = document.getElementById('onboarding-form');
-        const resultsCard = document.getElementById('results-card');
-        const btnBack = document.getElementById('btn-back');
+        function calculate() {
+            let weight = parseFloat(document.getElementById('weight').value);
+            let height = parseFloat(document.getElementById('height').value);
+            let age = parseFloat(document.getElementById('age').value);
+            let goal = document.getElementById('goal').value;
 
-        // Обработка отправки формы
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
+            if (!weight || !height || !age) {
+                tg.showAlert("Бро, заполни все поля!");
+                return;
+            }
 
-            const age = parseInt(document.getElementById('age').value);
-            const weight = parseFloat(document.getElementById('weight').value);
-            const height = parseFloat(document.getElementById('height').value);
-            const goal = document.getElementById('goal').value;
-
-            // Базовый обмен веществ (Уравнение Миффлина - Сан-Жеора для мужчин - берем за базу для "бро")
             let bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
-            
-            // TDEE (Коэффициент умеренной активности)
-            let tdee = bmr * 1.375;
-            
-            let calories, protein, fat, carbs;
+            let tdee = bmr * 1.55; 
 
-            // Логика расчета в зависимости от цели
-            if (goal === 'lose') {
-                calories = tdee * 0.80; // Дефицит 20%
-                protein = weight * 2.2; // Много белка для удержания мышц
-                fat = weight * 0.8;
-            } else if (goal === 'gain') {
-                calories = tdee * 1.15; // Профицит 15%
-                protein = weight * 2.0;
-                fat = weight * 1.0;
-            } else { // recomp (рельеф)
-                calories = tdee;
-                protein = weight * 2.2;
-                fat = weight * 1.0;
+            if (goal.includes("Похудение")) {
+                tdee -= 400;
+            } else if (goal.includes("Набор")) {
+                tdee += 400;
             }
 
-            // Углеводы — всё, что осталось от калорий (1г белка=4ккал, 1г жира=9ккал, 1г угл=4ккал)
-            carbs = (calories - (protein * 4) - (fat * 9)) / 4;
+            let cal = Math.round(tdee);
+            let prot = Math.round(weight * 2.2);
+            let fats = Math.round(weight * 0.8);
+            let carbs = Math.round((cal - (prot * 4) - (fats * 9)) / 4);
 
-            // Заполняем карточку результатов (округляем до целых)
-            document.getElementById('res-kcal').innerText = Math.round(calories);
-            document.getElementById('res-protein').innerText = Math.round(protein);
-            document.getElementById('res-fat').innerText = Math.round(fat);
-            document.getElementById('res-carbs').innerText = Math.round(carbs);
+            document.getElementById('res-cal').innerText = cal;
+            document.getElementById('res-prot').innerText = prot;
+            document.getElementById('res-fat').innerText = fats;
+            document.getElementById('res-carb').innerText = carbs;
 
-            // Переключаем экраны
-            form.classList.add('hidden');
-            form.classList.remove('flex');
-            resultsCard.classList.remove('hidden');
-            resultsCard.classList.add('flex');
-            
-            // Если доступен Telegram Haptic Feedback (вибрация), даем легкий отклик
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('heavy');
-            }
-        });
+            finalData = {
+                weight: weight,
+                goal: goal,
+                calories: cal,
+                protein: prot,
+                fats: fats,
+                carbs: carbs
+            };
 
-        // Кнопка "Назад"
-        btnBack.addEventListener('click', () => {
-            resultsCard.classList.add('hidden');
-            resultsCard.classList.remove('flex');
-            form.classList.remove('hidden');
-            form.classList.add('flex');
-        });
+            document.getElementById('main-screen').style.display = 'none';
+            document.getElementById('result-screen').style.display = 'block';
+        }
+
+        function goBack() {
+            document.getElementById('main-screen').style.display = 'block';
+            document.getElementById('result-screen').style.display = 'none';
+        }
+
+        function sendData() {
+            tg.sendData(JSON.stringify(finalData));
+        }
     </script>
 </body>
 </html>
