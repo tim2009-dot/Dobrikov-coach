@@ -27,6 +27,7 @@
             color: var(--text-main);
             margin: 0;
             padding: 0 0 90px 0;
+            min-height: 100vh; /* Чтобы фон не обрывался */
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
         }
@@ -94,6 +95,7 @@
                 <select id="goal">
                     <option value="Похудение">Сушка / Рельеф</option>
                     <option value="Набор массы">Набор чистой массы</option>
+                    <option value="Поддержание">Поддержание формы</option> <!-- ВЕРНУЛИ ТРЕТЬЮ ЦЕЛЬ -->
                 </select>
             </div>
             <div class="input-group">
@@ -158,6 +160,9 @@
             
             document.getElementById('tab-' + tabId).classList.add('active');
             element.classList.add('active');
+            
+            // Фикс бага с дергающимся экраном: принудительно возвращаем скролл наверх!
+            window.scrollTo(0, 0); 
         }
 
         // Логика внутреннего чата
@@ -177,7 +182,7 @@
             switchTab('chat', document.getElementById('nav-chat'));
             let chatBox = document.getElementById('chat-box');
 
-            // 2. Добавляем сообщение юзера (красивый золотой пузырь справа)
+            // 2. Добавляем сообщение юзера
             let userMsg = document.createElement('div');
             userMsg.className = 'message msg-user';
             userMsg.innerHTML = `Бро, мой вес ${weight} кг. Цель: ${goal}. Текущее КБЖУ: ${calories}. Сделай план.`;
@@ -189,21 +194,23 @@
             typingIndicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
             chatBox.appendChild(typingIndicator);
             
-            // Скроллим вниз
-            window.scrollTo(0, document.body.scrollHeight);
-
-            // 4. ТУТ БУДЕТ СВЯЗЬ С PYTHON-СЕРВЕРОМ (Имитация ответа для теста визуала)
+            // Принудительно скроллим вниз чата, чтобы видеть анимацию
             setTimeout(() => {
-                chatBox.removeChild(typingIndicator); // Убираем точки
+                window.scrollTo(0, document.body.scrollHeight);
+            }, 50);
+
+            // 4. Имитация ответа
+            setTimeout(() => {
+                chatBox.removeChild(typingIndicator); 
                 
                 let aiMsg = document.createElement('div');
                 aiMsg.className = 'message msg-ai';
-                aiMsg.innerHTML = `🔥 Принял! <b>${weight} кг</b> — отличная база. <br><br>Интерфейс чата полностью готов и работает внутри приложения. Следующий шаг — подключить сюда твой Python код, чтобы этот текст генерировал настоящий ИИ-сервер!`;
+                aiMsg.innerHTML = `🔥 Принял! <b>${weight} кг</b> — отличная база. <br><br>Интерфейс чата полностью готов. Следующий шаг — подключить сюда твой Python код, чтобы этот текст генерировал настоящий ИИ-сервер!`;
                 chatBox.appendChild(aiMsg);
                 
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                 window.scrollTo(0, document.body.scrollHeight);
-            }, 2500); // ИИ "думает" 2.5 секунды
+            }, 2500);
         }
     </script>
 </body>
