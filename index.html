@@ -6,235 +6,210 @@
     <title>Dobrikov Coach</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root {
-            --bg-grad-1: #0a0a0c; --bg-grad-2: #141418;
-            --card-bg: rgba(22, 22, 26, 0.65); --card-border: rgba(212, 175, 55, 0.15);
-            --input-bg: rgba(30, 30, 35, 0.9); --gold: #D4AF37;
-            --gold-glow: rgba(212, 175, 55, 0.3); --text-main: #FFFFFF;
-            --text-sub: #A0A0A5; --glass-bg: rgba(10, 10, 12, 0.95);
+        /* БАЗОВЫЕ НАСТРОЙКИ И ЖЕСТКИЙ FLEXBOX */
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            background-color: #111; color: #fff;
+            font-family: Arial, sans-serif;
+            overflow: hidden; /* Запрещаем дергание экрана */
         }
-        html, body {
-            height: 100%; height: var(--tg-viewport-stable-height, 100vh);
-            overflow: hidden; margin: 0; padding: 0;
-            background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
-            color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        .app-container {
+            display: flex; flex-direction: column; height: 100vh;
         }
-        .fade-in { animation: appAppear 0.5s ease-out forwards; }
-        @keyframes appAppear { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-        .tab-content { display: none; height: 100%; overflow-y: auto; padding-bottom: 90px; box-sizing: border-box; }
-        .tab-content.active { display: block; animation: fadeTab 0.4s ease-out forwards; }
-        @keyframes fadeTab { from { opacity: 0; transform: translateX(15px); } to { opacity: 1; transform: translateX(0); } }
-
-        #tab-chat.active { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 85px; }
-
-        .header { padding: 25px 24px 10px; flex-shrink: 0; }
-        .header h1 { font-size: 32px; margin: 0; font-weight: 800; background: linear-gradient(90deg, #FFF, var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .header p { color: var(--text-sub); margin: 6px 0 0; font-size: 15px; font-weight: 500; }
-
-        .card { background: var(--card-bg); backdrop-filter: blur(16px); border: 1px solid var(--card-border); border-radius: 24px; padding: 24px; margin: 15px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; font-size: 12px; color: var(--text-sub); margin-bottom: 8px; text-transform: uppercase; font-weight: 700; }
-        input, select { width: 100%; background: var(--input-bg); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; color: #FFF; padding: 16px 20px; font-size: 16px; box-sizing: border-box; outline: none; transition: 0.3s; }
-        input:focus, select:focus { border-color: var(--gold); }
-
-        .btn-main { background: linear-gradient(135deg, var(--gold) 0%, #b38f22 100%); color: #000; border: none; border-radius: 18px; padding: 18px; width: 100%; font-size: 17px; font-weight: 800; cursor: pointer; margin-top: 10px; box-shadow: 0 6px 20px var(--gold-glow); transition: 0.2s; }
-        .btn-main:active { transform: scale(0.96); }
-        .btn-main:disabled { filter: grayscale(1); opacity: 0.7; cursor: not-allowed; transform: none; box-shadow: none; }
-
-        .chat-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; padding: 15px 20px 20px; scroll-behavior: smooth; }
-        .message { max-width: 85%; padding: 14px 18px; border-radius: 20px; font-size: 15px; line-height: 1.45; animation: msgPop 0.4s forwards; opacity: 0; transform: translateY(10px); word-break: break-word; }
-        @keyframes msgPop { to { opacity: 1; transform: translateY(0); } }
+        /* ВКЛАДКИ */
+        .tab-content {
+            flex-grow: 1; display: none; overflow-y: auto; flex-direction: column; padding: 15px;
+        }
+        .tab-content.active {
+            display: flex;
+        }
         
-        .msg-user { align-self: flex-end; background: linear-gradient(135deg, var(--gold) 0%, #b38f22 100%); color: #000; font-weight: 600; border-bottom-right-radius: 4px; }
-        .msg-ai { align-self: flex-start; background: var(--card-bg); backdrop-filter: blur(10px); border: 1px solid var(--card-border); border-bottom-left-radius: 4px; }
+        /* НИЖНЕЕ МЕНЮ (Мертво закреплено внизу) */
+        .bottom-nav {
+            display: flex; background-color: #050505; border-top: 1px solid #333; padding: 10px 0;
+            flex-shrink: 0;
+        }
+        .nav-btn {
+            flex: 1; text-align: center; color: #666; cursor: pointer; padding: 5px; font-size: 14px; font-weight: bold;
+        }
+        .nav-btn.active { color: #f1c40f; } /* Золотой цвет активной вкладки */
+
+        /* ЧАТ */
+        .chat-box { flex-grow: 1; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .message { padding: 12px 16px; border-radius: 15px; max-width: 85%; line-height: 1.4; font-size: 15px; }
+        .msg-user { background-color: #f1c40f; color: #000; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: bold; }
+        .msg-bot { background-color: #222; color: #fff; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #333; }
         
-        .typing { display: flex; align-items: center; gap: 8px; padding: 14px 18px; align-self: flex-start; background: var(--card-bg); border-radius: 20px; border-bottom-left-radius: 4px; border: 1px solid var(--card-border); color: var(--text-sub); font-size: 13px; animation: msgPop 0.3s forwards; }
-        .dots { display: flex; gap: 4px; }
-        .dot { width: 5px; height: 5px; background: var(--gold); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
-        .dot:nth-child(1) { animation-delay: -0.32s; } .dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        /* ПОЛЕ ВВОДА В ЧАТЕ */
+        .input-area {
+            display: flex; gap: 10px; flex-shrink: 0; padding-bottom: 5px;
+        }
+        input.chat-input {
+            flex-grow: 1; background: #222; border: 1px solid #444; color: #fff; padding: 14px; border-radius: 25px; outline: none; font-size: 15px;
+        }
+        button.send-btn {
+            background: #f1c40f; color: #000; border: none; padding: 0 20px; border-radius: 25px; font-weight: bold; font-size: 18px; cursor: pointer;
+        }
 
-        .chat-input-wrapper { flex-shrink: 0; padding: 12px 20px; background: var(--glass-bg); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.08); display: flex; gap: 10px; z-index: 998; }
-        .chat-input-wrapper input { flex: 1; padding: 14px 18px; border-radius: 16px; margin: 0; background: rgba(40,40,45,0.9); }
-        .chat-input-wrapper button { background: var(--gold); color: #000; border: none; border-radius: 16px; width: 50px; height: 50px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: 0.2s; }
-        .chat-input-wrapper button:disabled { background: var(--text-sub); cursor: not-allowed; }
-
-        .glass-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--glass-bg); backdrop-filter: blur(25px); border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-around; padding: 12px 10px 22px; z-index: 999; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-sub); font-size: 11px; font-weight: 600; cursor: pointer; width: 70px; }
-        .nav-item.active { color: var(--gold); transform: translateY(-2px); }
-        .nav-item svg { width: 24px; height: 24px; margin-bottom: 4px; fill: currentColor; }
+        /* ПОЛЯ НА ГЛАВНОЙ (БАЗА) */
+        .param-label { font-size: 14px; color: #aaa; margin-bottom: 5px; margin-top: 10px; }
+        .param-input {
+            width: 100%; background: #222; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 10px; box-sizing: border-box; font-size: 16px;
+        }
     </style>
 </head>
-<body class="fade-in">
+<body>
+    <div class="app-container">
+        
+        <!-- ВКЛАДКА: БАЗА -->
+        <div id="tab-base" class="tab-content">
+            <h2 style="color: #f1c40f; margin-top: 0;">Твоя База</h2>
+            <div class="param-label">Вес (кг):</div>
+            <input type="text" id="weight" class="param-input" placeholder="Например: 85">
+            <div class="param-label">Цель:</div>
+            <input type="text" id="goal" class="param-input" placeholder="Например: Сушка, классик физик">
+            <div class="param-label">КБЖУ:</div>
+            <input type="text" id="calories" class="param-input" placeholder="Например: 2500 ккал">
+            <p style="color: #666; font-size: 12px; margin-top: 20px;">Заполни эти данные, ИИ будет опираться на них при составлении плана.</p>
+        </div>
 
-    <div id="tab-home" class="tab-content active">
-        <div class="header"><h1>Dobrikov Coach</h1><p>Выход на новый уровень.</p></div>
-        <div class="card">
-            <div class="input-group"><label>Вес (кг)</label><input type="number" id="weight" placeholder="Например: 85" /></div>
-            <div class="input-group">
-                <label>Архитектура тела</label>
-                <select id="goal">
-                    <option value="Похудение">Сушка / Рельеф</option>
-                    <option value="Набор массы">Набор чистой массы</option>
-                    <option value="Поддержание">Поддержание формы</option>
-                </select>
+        <!-- ВКЛАДКА: ЧАТ -->
+        <div id="tab-chat" class="tab-content active">
+            <div class="chat-box" id="chat-box">
+                <!-- Сюда будут падать сообщения -->
             </div>
-            <div class="input-group"><label>Текущее КБЖУ</label><input type="text" id="calories" placeholder="Ккал / Б / Ж / У" /></div>
-            <button class="btn-main" id="btn-generate" onclick="sendFirstRequest()">Сгенерировать план</button>
+            <div class="input-area">
+                <input type="text" id="chat-input" class="chat-input" placeholder="Написать тренеру...">
+                <button class="send-btn" onclick="sendMessage()">➤</button>
+            </div>
         </div>
-    </div>
 
-    <div id="tab-chat" class="tab-content">
-        <div class="header" style="padding-bottom: 0;"><h1>ИИ-Тренер</h1><p>Чат защищен и приватен</p></div>
-        <div class="chat-container" id="chat-box"></div>
-        <div class="chat-input-wrapper">
-            <input type="text" id="chat-input" placeholder="Написать тренеру..." onkeydown="if(event.key === 'Enter') sendChatMessage()" />
-            <button id="btn-send" onclick="sendChatMessage()">➤</button>
+        <!-- ВКЛАДКА: ВИДЕО (ЗАДЕЛ НА СЛЕДУЮЩИЙ ШАГ) -->
+        <div id="tab-video" class="tab-content">
+            <h2 style="color: #f1c40f; margin-top: 0;">Анализ Техники</h2>
+            <p style="color: #aaa;">Здесь мы реализуем загрузку видео для оценки твоей биомеханики.</p>
         </div>
-    </div>
 
-    <div id="tab-video" class="tab-content">
-        <div class="header"><h1>Биомеханика</h1><p>ИИ-контроль техники</p></div>
-        <div class="card" style="text-align: center; padding: 40px 20px;">
-            <h3 style="margin: 0 0 10px 0; font-size: 20px;">Камера включена</h3>
-            <p style="color: var(--text-sub); font-size: 14px; margin: 0 0 25px 0;">Загрузи видео подхода. (В разработке)</p>
-            <button class="btn-main" style="background: rgba(255,255,255,0.05); color: var(--gold); border: 1px solid var(--card-border);">Выбрать видео</button>
+        <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+        <div class="bottom-nav">
+            <div class="nav-btn" onclick="switchTab('base', this)">🏠 База</div>
+            <div class="nav-btn active" onclick="switchTab('chat', this)">💬 Чат</div>
+            <div class="nav-btn" onclick="switchTab('video', this)">📹 Видео</div>
         </div>
-    </div>
-
-    <div class="glass-nav">
-        <div class="nav-item active" onclick="switchTab('home', this)"><svg viewBox="0 0 24 24"><path d="M12 3L4 9v12h5v-7h6v7h5V9z"/></svg>База</div>
-        <div class="nav-item" onclick="switchTab('chat', this)" id="nav-chat"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>Чат</div>
-        <div class="nav-item" onclick="switchTab('video', this)"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>Видео</div>
     </div>
 
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand(); tg.setHeaderColor('#0a0a0c'); 
-        
-        let userId = tg.initDataUnsafe?.user?.id || 'local_test_user';
-        let isGenerating = false; // ЖЕСТКАЯ БЛОКИРОВКА ОТ СПАМА
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
+        // Элементы
+        const chatBox = document.getElementById('chat-box');
+        const chatInput = document.getElementById('chat-input');
+        const weightInput = document.getElementById('weight');
+        const goalInput = document.getElementById('goal');
+        const caloriesInput = document.getElementById('calories');
+
+        // Переключение вкладок
         function switchTab(tabId, element) {
-            if(element.classList.contains('active')) return;
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            let newTab = document.getElementById('tab-' + tabId);
-            newTab.classList.add('active'); element.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        // Отрисовка сообщения в чате
+        function addMessageToUI(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message');
+            msgDiv.classList.add(sender === 'user' ? 'msg-user' : 'msg-bot');
             
-            if (tabId === 'chat') {
-                let chatBox = document.getElementById('chat-box');
-                chatBox.scrollTop = chatBox.scrollHeight;
-            } else {
-                newTab.scrollTo(0, 0); 
-            }
+            // Превращаем текст ИИ в красивый HTML (жирный текст и переносы строк)
+            let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+            msgDiv.innerHTML = formattedText;
+            
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        function formatAIResponse(text) {
-            return text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
-        }
-
-        window.onload = async function() {
+        // 🔥 ГЛАВНОЕ: Загрузка истории при старте
+        async function loadChatHistory() {
+            const userId = tg.initDataUnsafe?.user?.id || "123456";
             try {
-                let response = await fetch('http://127.0.0.1:8000/get_history', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: String(userId) })
+                let response = await fetch("http://127.0.0.1:8000/get_history", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({user_id: String(userId)})
                 });
                 let data = await response.json();
                 
+                // Подтягиваем старые данные в Базу
+                if (data.weight) weightInput.value = data.weight;
+                if (data.goal) goalInput.value = data.goal;
+                if (data.calories) caloriesInput.value = data.calories;
+
+                // Отрисовываем старую переписку
                 if (data.history && data.history.length > 0) {
-                    document.getElementById("weight").value = data.weight || "";
-                    document.getElementById("goal").value = data.goal || "";
-                    document.getElementById("calories").value = data.calories || "";
-
-                    let chatBox = document.getElementById('chat-box');
                     data.history.forEach(msg => {
-                        let divClass = msg.role === 'user' ? 'msg-user' : 'msg-ai';
-                        let text = msg.role === 'user' ? msg.text : formatAIResponse(msg.text);
-                        // Используем безопасный метод вставки
-                        chatBox.insertAdjacentHTML('beforeend', `<div class="message ${divClass}">${text}</div>`);
+                        addMessageToUI(msg.text, msg.role === "user" ? "user" : "bot");
                     });
-
-                    switchTab('chat', document.getElementById('nav-chat'));
-                    setTimeout(() => chatBox.scrollTop = chatBox.scrollHeight, 100);
+                } else {
+                    addMessageToUI("Здарова, бро! Тренер на связи. Напиши свои данные в Базе и расскажи, что будем качать сегодня.", "bot");
                 }
             } catch (error) {
-                console.log("Сервер недоступен для истории.");
+                console.error("Ошибка загрузки истории:", error);
+                addMessageToUI("❌ Ошибка загрузки базы. Убедись, что черный экран терминала Python запущен.", "bot");
             }
-        };
+        }
 
-        async function triggerAI(message) {
-            if (isGenerating) return; // Блокируем новые запросы, пока ИИ не ответит
-            isGenerating = true;
-            document.getElementById('btn-send').disabled = true;
-            document.getElementById('btn-generate').disabled = true;
+        // Отправка нового сообщения
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
 
-            let chatBox = document.getElementById('chat-box');
-            
-            // ПРАВИЛЬНЫЙ РЕНДЕР: добавляем без уничтожения старого контента
-            chatBox.insertAdjacentHTML('beforeend', `<div class="message msg-user">${message}</div>`);
-            
-            let typingId = 'typing-' + Date.now();
-            chatBox.insertAdjacentHTML('beforeend', `<div class="typing" id="${typingId}"><span>ИИ думает</span><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`);
-            
-            chatBox.scrollTop = chatBox.scrollHeight;
+            addMessageToUI(text, "user");
+            chatInput.value = "";
 
-            let data = {
+            const userId = tg.initDataUnsafe?.user?.id || "123456";
+            const payload = {
                 user_id: String(userId),
-                weight: document.getElementById("weight").value || "Не указан",
-                goal: document.getElementById("goal").value || "Не указана",
-                calories: document.getElementById("calories").value || "Не указано",
-                message: message
+                weight: weightInput.value || "Не указан",
+                goal: goalInput.value || "Без цели",
+                calories: caloriesInput.value || "Не указан",
+                message: text
             };
 
+            // Индикатор "Тренер печатает..."
+            const typingDiv = document.createElement('div');
+            typingDiv.classList.add('message', 'msg-bot');
+            typingDiv.innerText = "Анализирую...";
+            typingDiv.id = "typing-indicator";
+            chatBox.appendChild(typingDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
             try {
-                let response = await fetch('http://127.0.0.1:8000/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                let response = await fetch("http://127.0.0.1:8000/chat", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(payload)
                 });
-                if (!response.ok) throw new Error("HTTP Status " + response.status);
-                let result = await response.json();
+                let data = await response.json();
                 
-                let typingEl = document.getElementById(typingId);
-                if (typingEl) typingEl.remove();
-                
-                chatBox.insertAdjacentHTML('beforeend', `<div class="message msg-ai">${formatAIResponse(result.reply)}</div>`);
-                chatBox.scrollTop = chatBox.scrollHeight;
-                if (tg.HapticFeedback && tg.HapticFeedback.notificationOccurred) {
-                    tg.HapticFeedback.notificationOccurred('success');
-                }
+                chatBox.removeChild(document.getElementById('typing-indicator'));
+                addMessageToUI(data.reply, "bot");
             } catch (error) {
-                let typingEl = document.getElementById(typingId);
-                if (typingEl) typingEl.remove();
-                chatBox.insertAdjacentHTML('beforeend', `<div class="message msg-ai">❌ Ошибка связи с сервером. Запущен ли python main.py?</div>`);
-                chatBox.scrollTop = chatBox.scrollHeight;
-            } finally {
-                // Снимаем блокировку
-                isGenerating = false;
-                document.getElementById('btn-send').disabled = false;
-                document.getElementById('btn-generate').disabled = false;
+                chatBox.removeChild(document.getElementById('typing-indicator'));
+                addMessageToUI("❌ Ошибка связи с сервером.", "bot");
             }
         }
 
-        function sendFirstRequest() {
-            if (!document.getElementById("weight").value) {
-                if (tg.HapticFeedback && tg.HapticFeedback.notificationOccurred) tg.HapticFeedback.notificationOccurred('error');
-                return;
-            }
-            switchTab('chat', document.getElementById('nav-chat'));
-            triggerAI("Бро, посмотри мои данные на главной. Сделай мне план тренировок.");
-        }
+        // Отправка по кнопке Enter
+        chatInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') sendMessage();
+        });
 
-        function sendChatMessage() {
-            let input = document.getElementById('chat-input');
-            if(input.value.trim() === '') return;
-            triggerAI(input.value);
-            input.value = '';
-        }
+        // Запуск подтягивания истории при загрузке страницы
+        document.addEventListener("DOMContentLoaded", loadChatHistory);
     </script>
 </body>
 </html>
