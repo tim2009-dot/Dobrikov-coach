@@ -267,14 +267,34 @@
     </div>
 
     <script>
-        const API = (() => {
+        const PUBLIC_API = "https://bedroom-flexibility-camel-limits.trycloudflare.com";
+        const API_CANDIDATES = (() => {
             const fromQuery = new URLSearchParams(location.search).get("api");
-            if (fromQuery) return fromQuery.replace(/\/$/, "");
+            const list = [];
+            if (fromQuery) list.push(fromQuery.replace(/\/$/, ""));
+            list.push(PUBLIC_API);
             if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
-                return location.origin;
+                list.push(location.origin);
             }
-            return "http://127.0.0.1:8000";
+            list.push("http://127.0.0.1:8000");
+            return [...new Set(list)];
         })();
+        async function apiFetch(path, options) {
+            let lastError = null;
+            for (const base of API_CANDIDATES) {
+                try {
+                    const response = await fetch(base + path, options);
+                    if (response.status >= 500) {
+                        lastError = new Error("bad gateway " + response.status);
+                        continue;
+                    }
+                    return response;
+                } catch (e) {
+                    lastError = e;
+                }
+            }
+            throw lastError || new Error("no api");
+        }
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor("#111111"); tg.setBackgroundColor("#111111"); }
 
@@ -321,7 +341,7 @@
 
         async function loadChatHistory() {
             try {
-                const response = await fetch(API + "/get_history", {
+                const response = await apiFetch("/get_history", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ user_id: userId() })
@@ -356,7 +376,7 @@
             chatBox.appendChild(typing);
             chatBox.scrollTop = chatBox.scrollHeight;
             try {
-                const response = await fetch(API + "/chat", {
+                const response = await apiFetch("/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -415,7 +435,7 @@
             fd.append("notes", document.getElementById("notes").value || "");
             fd.append("video", selectedFile);
             try {
-                const response = await fetch(API + "/analyze_video", { method: "POST", body: fd });
+                const response = await apiFetch("/analyze_video", { method: "POST", body: fd });
                 const data = await response.json();
                 out.innerHTML = fmt(data.reply);
                 addMessageToUI("[Видеоанализ] " + (document.getElementById("exercise").value || "техника"), "user");
