@@ -267,7 +267,14 @@
     </div>
 
     <script>
-        const API = "http://127.0.0.1:8000";
+        const API = (() => {
+            const fromQuery = new URLSearchParams(location.search).get("api");
+            if (fromQuery) return fromQuery.replace(/\/$/, "");
+            if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
+                return location.origin;
+            }
+            return "http://127.0.0.1:8000";
+        })();
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor("#111111"); tg.setBackgroundColor("#111111"); }
 
@@ -329,7 +336,11 @@
                     addMessageToUI("Здарова, бро. Заполни Базу, пиши в чат план, или кидай видео техники — разберу по кадрам.", "bot");
                 }
             } catch (e) {
-                addMessageToUI("Нет связи с Python-сервером. Запусти main.py в терминале.", "bot");
+                addMessageToUI(
+                    "Нет связи с сервером. В папке проекта открой терминал и выполни: python main.py\n" +
+                    "Должно быть: API http://127.0.0.1:8000. Mini App с GitHub ходит на твой ПК — ПК и main.py должны быть включены.",
+                    "bot"
+                );
             }
         }
 
