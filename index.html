@@ -267,27 +267,55 @@
     </div>
 
     <script>
-        const PUBLIC_API = "https://bedroom-flexibility-camel-limits.trycloudflare.com";
+        // Сначала локальный ПК (Telegram Desktop), потом api из ссылки, потом публичный туннель
+        const PUBLIC_API = "";
         const API_CANDIDATES = (() => {
             const fromQuery = new URLSearchParams(location.search).get("api");
-            const list = [];
-            if (fromQuery) list.push(fromQuery.replace(/\/$/, ""));
-            list.push(PUBLIC_API);
+            const list = ["http://127.0.0.1:8000"];
             if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
-                list.push(location.origin);
+                list.unshift(location.origin);
             }
-            list.push("http://127.0.0.1:8000");
+            if (fromQuery) list.push(fromQuery.replace(/\/$/, ""));
+            if (PUBLIC_API) list.push(PUBLIC_API);
             return [...new Set(list)];
         })();
-        async function apiFetch(path, options) {
-            let lastError = null;
+        let workingApi = null;
+        async function pickApi() {
+            if (workingApi) return workingApi;
             for (const base of API_CANDIDATES) {
+                const ctrl = new AbortController();
+                const timer = setTimeout(() => ctrl.abort(), 2500);
                 try {
-                    const response = await fetch(base + path, options);
+                    const r = await fetch(base + "/health", { signal: ctrl.signal, cache: "no-store" });
+                    clearTimeout(timer);
+                    if (r.ok) {
+                        workingApi = base;
+                        return base;
+                    }
+                } catch (e) {
+                    clearTimeout(timer);
+                }
+            }
+            return API_CANDIDATES[0];
+        }
+        async function apiFetch(path, options) {
+            const base = await pickApi();
+            try {
+                const response = await fetch(base + path, options);
+                if (response.ok || response.status < 500) return response;
+            } catch (e) {
+                workingApi = null;
+            }
+            workingApi = null;
+            let lastError = null;
+            for (const next of API_CANDIDATES) {
+                try {
+                    const response = await fetch(next + path, options);
                     if (response.status >= 500) {
                         lastError = new Error("bad gateway " + response.status);
                         continue;
                     }
+                    workingApi = next;
                     return response;
                 } catch (e) {
                     lastError = e;
